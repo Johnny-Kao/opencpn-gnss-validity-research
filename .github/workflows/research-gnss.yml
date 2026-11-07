@@ -1,0 +1,21 @@
+name: GNSS 129029 focused research
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-n2k-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile actual vendored N2KParser with sanitizers
+        run: |
+          g++ -std=c++17 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
+            -Ilibs/N2KParser/include \
+            research/gnss_129029_probe.cpp \
+            libs/N2KParser/src/N2kMessages.cpp \
+            libs/N2KParser/src/N2kMsg.cpp \
+            -o /tmp/gnss_129029_probe
+      - name: Execute native parser probe
+        run: /tmp/gnss_129029_probe

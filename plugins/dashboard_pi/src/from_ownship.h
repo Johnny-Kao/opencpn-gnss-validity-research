@@ -1,0 +1,68 @@
+/**************************************************************************
+ *   Copyright (C) 2010 by Pavel Kalian                                    *
+ *   Copyright (C) 2010 by David S. Register                               *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, see <https://www.gnu.org/licenses/>. *
+ **************************************************************************/
+
+/**
+ * \file
+ *
+ * Dashboard own ship data instrument
+ */
+
+#ifndef FROM_OWNSHIP_H_
+#define FROM_OWNSHIP_H_
+
+// For compilers that support precompilation, includes "wx/wx.h".
+#include <wx/wxprec.h>
+
+// for all others, include the necessary headers (this file is usually all you
+// need because it includes almost all "standard" wxWidgets headers)
+#ifndef WX_PRECOMP
+#include <wx/wx.h>
+#endif
+
+#include "instrument.h"
+
+class DashboardInstrument_FromOwnship : public DashboardInstrument {
+public:
+  DashboardInstrument_FromOwnship(wxWindow* pparent, wxWindowID id,
+                                  wxString title,
+                                  InstrumentProperties* Properties,
+                                  DASH_CAP cap_flag1 = OCPN_DBP_STC_PLA,
+                                  DASH_CAP cap_flag2 = OCPN_DBP_STC_PLO,
+                                  DASH_CAP cap_flag3 = OCPN_DBP_STC_LAT,
+                                  DASH_CAP cap_flag4 = OCPN_DBP_STC_LON);
+  ~DashboardInstrument_FromOwnship() override = default;
+
+  void SetData(DASH_CAP st, double data, wxString unit) override;
+  wxSize GetSize(int orient, wxSize hint) override;
+
+protected:
+  wxString m_data1;
+  wxString m_data2;
+  double c_lat;
+  double c_lon;
+  double s_lat;
+  double s_lon;
+  DASH_CAP m_cap_flag1;
+  DASH_CAP m_cap_flag2;
+  DASH_CAP m_cap_flag3;
+  DASH_CAP m_cap_flag4;
+
+  void Draw(wxGCDC* dc) override;
+};
+
+#endif  // FROM_OWNSHIP_H_
