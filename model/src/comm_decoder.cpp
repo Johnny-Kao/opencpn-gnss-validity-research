@@ -339,8 +339,7 @@ bool CommDecoder::DecodePGN129029(std::vector<unsigned char> v,
                         HDOP, PDOP, GeoidalSeparation, nReferenceStations,
                         ReferenceStationType, ReferenceSationID,
                         AgeOfCorrection)) {
-    // Explicitly invalid GNSS methods must not renew the position watchdog.
-    // Leave other modes untouched for backwards compatibility.
+    // A reported loss of GNSS fix invalidates even numeric coordinates.
     if (GNSSmethod == N2kGNSSm_noGNSS || GNSSmethod == N2kGNSSm_Error ||
         GNSSmethod == N2kGNSSm_Unavailable)
       return false;
