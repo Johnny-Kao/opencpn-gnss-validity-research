@@ -47,3 +47,13 @@ jobs:
             libs/N2KParser/src/N2kMsg.cpp -o /tmp/gnss_bridge_bypass
       - name: Probe separate PGN 129025 watchdog refresh path
         run: /tmp/gnss_bridge_bypass
+      - name: Compile unmodified production priority and watchdog functions
+        run: |
+          python3 research/extract_priority_bridge.py model/src/comm_bridge.cpp /tmp/gnss_priority_bridge.cpp
+          g++ -std=c++17 -O1 -g -fsanitize=undefined -fno-omit-frame-pointer -I. -Ilibs/N2KParser/include \
+            /tmp/gnss_decoder_after.cpp /tmp/gnss_priority_bridge.cpp \
+            research/gnss_priority_integration_test.cpp \
+            libs/N2KParser/src/N2KParser.cpp libs/N2KParser/src/N2kMessages.cpp \
+            libs/N2KParser/src/N2kMsg.cpp -o /tmp/gnss_priority_integration
+      - name: Test actual priority and watchdog transitions for GNSS failover
+        run: /tmp/gnss_priority_integration
