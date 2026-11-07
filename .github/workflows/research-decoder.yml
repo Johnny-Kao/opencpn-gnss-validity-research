@@ -36,3 +36,13 @@ jobs:
             libs/N2KParser/src/N2kMsg.cpp -o /tmp/gnss_decoder_after
       - name: Candidate patch must pass method and rapid-position checks
         run: /tmp/gnss_decoder_after
+      - name: Compile production bridge handlers with validity-only shim
+        run: |
+          python3 research/extract_bridge_functions.py model/src/comm_bridge.cpp /tmp/gnss_bridge_handlers.cpp
+          g++ -std=c++17 -O1 -g -fsanitize=undefined -fno-omit-frame-pointer -I. -Ilibs/N2KParser/include \
+            /tmp/gnss_decoder_after.cpp /tmp/gnss_bridge_handlers.cpp \
+            research/gnss_bridge_bypass_test.cpp \
+            libs/N2KParser/src/N2KParser.cpp libs/N2KParser/src/N2kMessages.cpp \
+            libs/N2KParser/src/N2kMsg.cpp -o /tmp/gnss_bridge_bypass
+      - name: Probe separate PGN 129025 watchdog refresh path
+        run: /tmp/gnss_bridge_bypass
