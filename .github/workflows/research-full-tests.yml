@@ -1,28 +1,58 @@
-name: GNSS complete model and GoogleTest build
+name: GNSS Staging — upstream Linux matrix and regressions
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  linux-model-tests:
+  upstream-linux-staging:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: normal
+            defines: ""
+          - variant: no-opengl
+            defines: "-DOCPN_USE_GL=OFF"
+          - variant: address-sanitizer
+            defines: "-DENABLE_SANITIZER=address"
+    name: Ubuntu / ${{ matrix.variant }}
     env:
       DEBIAN_FRONTEND: noninteractive
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install official Linux OpenCPN build prerequisites
-        run: |
-          ./ci/github-pre-build.sh
-      - name: Configure official project test target
-        run: |
-          cmake -S . -B /tmp/opencpn-gnss-build \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DOCPN_BUILD_TEST=ON \
-            -DOCPN_USE_GL=OFF
-      - name: Compile model and real project GoogleTest target
-        run: cmake --build /tmp/opencpn-gnss-build --target tests -j 2
-      - name: Run native CommDecoder GNSS regressions
-        run: /tmp/opencpn-gnss-build/test/tests --gtest_filter='GNSSValidityResearch.*'
+      - name: Install upstream build prerequisites
+        run: ./ci/github-pre-build.sh
+      - name: Configure upstream CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DOCPN_BUILD_TEST=ON ${{ matrix.defines }}
+      - name: Build full upstream application and targets
+        run: cmake --build build --config Release -j 2
+      - name: Run exact upstream run-tests target
+        working-directory: build
+        env:
+          CTEST_OUTPUT_ON_FAILURE: 1
+        run: make run-tests
+      - name: Run focused GNSS native regression in full project
+        run: ./build/test/tests --gtest_filter='GNSSValidityResearch.*'
+  upstream-clang-format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DoozyX/clang-format-lint-action@v0.18.2
+        with:
+          source: >-
+            ./model ./gui
+            ./plugins/wmm_pi/src ./plugins/dashboard_pi/src
+            ./plugins/chartdldr_pi/src ./plugins/grib_pi/src
+          exclude: >-
+            ./plugins/dashboard_pi/src/wxJSON
+            ./plugins/chartdldr_pi/src/unarr
+            ./plugins/chartdldr_pi/src/tinyxml
+            ./plugins/grib_pi/src/bzip2
+          extensions: h,cpp
+          clangFormatVersion: 18
+          style: file
