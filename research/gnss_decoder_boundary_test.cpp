@@ -24,7 +24,9 @@ static std::vector<unsigned char> actisense(const tN2kMsg& msg) {
 }
 int main() {
   CommDecoder decoder;
-  for (int method : {0,1,2,3,4,5,14,15}) {
+  // Check every 4-bit method value. Unspecified modes 6-13 retain their
+  // previous behavior; this patch rejects only explicitly invalid status.
+  for (int method = 0; method < 16; ++method) {
     tN2kMsg p;
     SetN2kPGN129029(p, 2, 20000, 10.0, 35.6812, 139.7671, 5.0,
                     N2kGNSSt_GPS, static_cast<tN2kGNSSmethod>(method),
