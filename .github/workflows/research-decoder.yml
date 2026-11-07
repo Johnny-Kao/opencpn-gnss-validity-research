@@ -1,0 +1,38 @@
+name: GNSS production decoder comparison
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  decoder-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Generate and compile original production functions
+        run: |
+          git show HEAD^:model/src/comm_decoder.cpp > /tmp/comm_decoder_before.cpp
+          python3 research/extract_decoder_functions.py --source /tmp/comm_decoder_before.cpp --out /tmp/gnss_decoder_before.cpp
+          g++ -std=c++17 -O1 -g -fsanitize=undefined -fno-omit-frame-pointer -I. -Ilibs/N2KParser/include \
+            /tmp/gnss_decoder_before.cpp research/gnss_decoder_boundary_test.cpp \
+            libs/N2KParser/src/N2KParser.cpp libs/N2KParser/src/N2kMessages.cpp \
+            libs/N2KParser/src/N2kMsg.cpp -o /tmp/gnss_decoder_before
+      - name: Confirm original code fails the invalid-fix invariant
+        run: |
+          if /tmp/gnss_decoder_before > /tmp/before.txt 2>&1; then
+            echo 'Unexpected: baseline satisfies new invariant'
+            exit 1
+          fi
+          cat /tmp/before.txt
+          echo 'Baseline defect reproduced (expected failing check)'
+      - name: Generate and compile patched production functions
+        run: |
+          python3 research/extract_decoder_functions.py --source model/src/comm_decoder.cpp --out /tmp/gnss_decoder_after.cpp
+          g++ -std=c++17 -O1 -g -fsanitize=undefined -fno-omit-frame-pointer -I. -Ilibs/N2KParser/include \
+            /tmp/gnss_decoder_after.cpp research/gnss_decoder_boundary_test.cpp \
+            libs/N2KParser/src/N2KParser.cpp libs/N2KParser/src/N2kMessages.cpp \
+            libs/N2KParser/src/N2kMsg.cpp -o /tmp/gnss_decoder_after
+      - name: Candidate patch must pass method and rapid-position checks
+        run: /tmp/gnss_decoder_after
