@@ -13,7 +13,8 @@ jobs:
           fetch-depth: 2
       - name: Generate and compile original production functions
         run: |
-          git show HEAD^:model/src/comm_decoder.cpp > /tmp/comm_decoder_before.cpp
+          git fetch origin main --depth=1
+          git show FETCH_HEAD:model/src/comm_decoder.cpp > /tmp/comm_decoder_before.cpp
           python3 research/extract_decoder_functions.py --source /tmp/comm_decoder_before.cpp --out /tmp/gnss_decoder_before.cpp
           g++ -std=c++17 -O1 -g -fsanitize=undefined -fno-omit-frame-pointer -I. -Ilibs/N2KParser/include \
             /tmp/gnss_decoder_before.cpp research/gnss_decoder_boundary_test.cpp \
