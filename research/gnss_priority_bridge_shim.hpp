@@ -58,6 +58,9 @@ class wxString {
   friend string operator+(const wxString& a, const char* b) {
     return a.value_ + b;
   }
+  friend std::ostream& operator<<(std::ostream& out, const wxString& s) {
+    return out << s.value_;
+  }
  private:
   string value_;
 };
@@ -86,7 +89,7 @@ struct wxDateTime {
   time_t GetTicks() const { return 12345; }
 };
 inline int wxMin(int a, int b) { return std::min(a, b); }
-inline const char* _(const char* s) { return s; }
+inline wxString _(const char* s) { return wxString(s); }
 inline void wxLogMessage(const wxString&) {}
 inline void wxLogMessage(const char*) {}
 
